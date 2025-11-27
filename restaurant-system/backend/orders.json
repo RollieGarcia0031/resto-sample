@@ -12,5 +12,14 @@
       "Pasta"
     ],
     "timestamp": "2025-11-27T19:10:52.653433"
+  },
+  {
+    "table": 10,
+    "items": [
+      "Salad",
+      "Drink",
+      "Soup"
+    ],
+    "timestamp": "2025-11-27T19:15:52.108878"
   }
 ]

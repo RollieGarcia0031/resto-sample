@@ -66,15 +66,22 @@ class CustomerApp:
         self.table_entry.pack(pady=5)
 
         # Item Selection
-        self.item_label = tk.Label(self.master, text="Select Item:")
+        self.item_label = tk.Label(self.master, text="Select Items (Ctrl+Click for multiple):")
         self.item_label.pack(pady=5)
         
-        self.menu_items = ["Burger", "Pizza", "Pasta", "Salad", "Drink"]
-        self.selected_item = tk.StringVar(self.master)
-        self.selected_item.set(self.menu_items[0]) # default value
+        self.menu_items = ["Burger", "Pizza", "Pasta", "Salad", "Drink", "Fries", "Soup", "Coffee", "Tea", "Water"] # Expanded menu items
+        
+        listbox_frame = tk.Frame(self.master)
+        listbox_frame.pack(pady=5)
 
-        self.item_dropdown = ttk.OptionMenu(self.master, self.selected_item, self.menu_items[0], *self.menu_items)
-        self.item_dropdown.pack(pady=5)
+        self.item_listbox = tk.Listbox(listbox_frame, selectmode=tk.MULTIPLE, height=min(len(self.menu_items), 6), width=30, exportselection=False)
+        for item in self.menu_items:
+            self.item_listbox.insert(tk.END, item)
+        self.item_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        scrollbar = tk.Scrollbar(listbox_frame, orient="vertical", command=self.item_listbox.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.item_listbox.config(yscrollcommand=scrollbar.set)
 
         # Send Order Button
         self.send_button = tk.Button(self.master, text="Send Order", command=self.send_order, bg='#4CAF50', fg='white', relief='raised')
@@ -82,7 +89,13 @@ class CustomerApp:
 
     def send_order(self):
         table_num_str = self.table_entry.get()
-        selected_item = self.selected_item.get()
+        
+        selected_indices = self.item_listbox.curselection()
+        if not selected_indices:
+            messagebox.showwarning("Input Error", "Please select at least one item.")
+            return
+
+        selected_items = [self.menu_items[i] for i in selected_indices]
 
         if not table_num_str:
             messagebox.showwarning("Input Error", "Table Number cannot be empty.")
@@ -99,15 +112,15 @@ class CustomerApp:
 
         order_data = {
             "table": table_num,
-            "items": [selected_item]
+            "items": selected_items
         }
 
         if self.sio_connected:
             sio.emit("new_order", order_data)
             save_customer_choice(order_data) # Save to local customer choices
-            messagebox.showinfo("Order Sent", f"Order for Table {table_num} ({selected_item}) sent successfully!")
+            messagebox.showinfo("Order Sent", f"Order for Table {table_num} ({', '.join(selected_items)}) sent successfully!")
             self.table_entry.delete(0, tk.END) # Clear table number
-            self.selected_item.set(self.menu_items[0]) # Reset item selection
+            self.item_listbox.selection_clear(0, tk.END) # Clear listbox selection
         else:
             messagebox.showerror("Connection Error", "Not connected to the backend. Please restart the app.")
 
